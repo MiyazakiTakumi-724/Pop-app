@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<!--
+  画面の構成と流れを確認するためのワイヤーフレーム。
+  デザインは作り込んでいない。データはすべてダミー（APIは呼んでいない）。
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pop（モック）</title>
+<style>
+  body { font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 8px; }
+  .note { font-size: 12px; color: #666; border: 1px solid #ccc; padding: 6px; }
+  .card { border: 1px solid #ccc; padding: 8px; margin-bottom: 8px; cursor: pointer; }
+  .img { background: #ddd; color: #666; font-size: 12px; text-align: center; padding: 60px 0; margin-bottom: 6px; }
+  .title { font-weight: bold; }
+  .meta { font-size: 12px; color: #666; }
+  .content { white-space: pre-wrap; line-height: 1.7; }
+  .hidden { display: none; }
+  .tag { font-size: 12px; margin: 2px; }
+  input, textarea { width: 100%; margin-bottom: 8px; }
+  textarea { height: 100px; }
+</style>
+</head>
+<body>
+
+<h1>Pop（レビュー掲示板）</h1>
+<p class="note">画面構成の確認用モック。データはダミーで、投稿してもサーバーには保存されません。</p>
+
+<!-- 一覧画面 -->
+<div id="listView">
+  <button id="newBtn">＋ ポップする</button>
+  <hr>
+  <p class="meta">タグで絞り込む（追加したタグがすべて付いたポップだけを表示）</p>
+  <input type="text" id="filterTagInput" placeholder="例：食べ物（Enterでも追加できます）">
+  <button id="addFilterTagBtn">追加</button>
+  <div id="filterTags"></div>
+  <hr>
+  <div id="timeline"></div>
+</div>
+
+<!-- 詳細画面 -->
+<div id="detailView" class="hidden">
+  <button id="backBtn">← 戻る</button>
+  <hr>
+  <div id="detailImages"></div>
+  <p class="title" id="detailTitle"></p>
+  <p class="meta" id="detailTags"></p>
+  <p class="meta" id="detailMeta"></p>
+  <p id="detailAddress"></p>
+  <p class="content" id="detailContent"></p>
+</div>
+
+<!-- 投稿画面（タイトル → タグ → 住所 → 本文 → 画像 の順） -->
+<div id="formView" class="hidden">
+  <button id="cancelBtn">← キャンセル</button>
+  <hr>
+  <p>タイトル（必須）</p>
+  <input type="text" id="formTitle">
+  <p>タグ</p>
+  <input type="text" id="formTagInput" placeholder="例：食べ物（Enterでも追加できます）">
+  <button id="addTagBtn">追加</button>
+  <div id="formTags"></div>
+  <p class="meta">候補（タップで追加）</p>
+  <div id="tagSuggestions"></div>
+  <p>住所</p>
+  <input type="text" id="formAddress" placeholder="お店や施設の住所を入力してください">
+  <p>本文</p>
+  <textarea id="formContent"></textarea>
+  <p>画像（必須・1枚目が一覧に表示される）</p>
+  <input type="file" id="formImages" multiple disabled>
+  <p class="meta">※ モックでは画像は選べません。投稿すると仮の画像が入ります</p>
+  <button id="submitBtn">投稿する</button>
+</div>
+
+<script>
+// ダミーデータ（本来はAPIから取得する）
+let pops = [
+  {
+    id: 1,
+    title: "セブンの新作カヌレ、想像の3倍うまい",
+    imageCount: 3,
+    tags: ["食べ物", "スイーツ", "コンビニ", "セブン"],
+    content: "外側はカリッと、中はもっちり。\n買ってから時間が経つと食感が落ちるので、その日のうちに食べるのがおすすめ。",
+    address: "",
+    createdAt: "12分前"
+  },
+  {
+    id: 2,
+    title: "代々木公園のイチョウ並木が見頃",
+    imageCount: 2,
+    tags: ["場所", "公園", "紅葉"],
+    content: "原宿門から入ってすぐの並木道が一面黄色。\n平日の午前中なら人も少なくて写真が撮りやすい。",
+    address: "東京都渋谷区代々木神園町2-1",
+    createdAt: "1時間前"
+  },
+  {
+    id: 3,
+    title: "無印の「人をダメにするソファ」2年使った感想",
+    imageCount: 2,
+    tags: ["商品", "家具", "無印良品"],
+    content: "最初の半年は最高。1年過ぎたあたりからビーズがへたってくる。\n補充用ビーズが別売りであるので、それ込みの買い物と思えば納得。",
+    address: "",
+    createdAt: "3時間前"
+  },
+  {
+    id: 4,
+    title: "駅裏にできた家系ラーメンの新店",
+    imageCount: 3,
+    tags: ["食べ物", "ラーメン", "新店"],
+    content: "スープは乳化強めでまろやか。味の濃さ・脂・麺の硬さを無料で調整できる。\n12時を過ぎると並ぶので開店直後がねらい目。",
+    address: "東京都〇〇区〇〇1-2-3（ダミー）",
+    createdAt: "7時間前"
+  },
+  {
+    id: 5,
+    title: "コンビニのいちごミルク3種を飲み比べた",
+    imageCount: 4,
+    tags: ["食べ物", "コンビニ", "飲み物"],
+    content: "甘さ控えめならローソン、果肉感ならセブン、コスパならファミマ。\n個人的な優勝はセブンでした。",
+    address: "",
+    createdAt: "1日前"
+  },
+  {
+    id: 6,
+    title: "地元の秋祭りに行ってきた",
+    imageCount: 1,
+    tags: [],
+    content: "屋台が去年より増えていた。\n夜の神輿は迫力があって見に行く価値あり。",
+    address: "",
+    createdAt: "2日前"
+  }
+];
+
+// 掲示板の絞り込みに使うタグ（空なら全件表示）
+var filterTags = [];
+// 投稿フォームで追加したタグ
+var draftTags = [];
+
+var listView = document.getElementById("listView");
+var detailView = document.getElementById("detailView");
+var formView = document.getElementById("formView");
+
+function showView(view) {
+  listView.className = "hidden";
+  detailView.className = "hidden";
+  formView.className = "hidden";
+  view.className = "";
+  window.scrollTo(0, 0); // 画面を切り替えたら一番上から表示する
+}
+
+// タグの表記を整える（前後の空白と先頭の # を取り除く）
+function normalizeTag(text) {
+  return text.trim().replace(/^#+/, "").trim();
+}
+
+// タグの配列に追加する（空・20文字超・重複は追加しない）
+function addTagTo(list, text) {
+  var tag = normalizeTag(text);
+  if (tag === "") return false;
+  if (tag.length > 20) {
+    alert("タグは20文字までです");
+    return false;
+  }
+  if (list.indexOf(tag) === -1) list.push(tag);
+  return true;
+}
+
+// 入力欄で Enter を押したときに追加する（日本語の変換を確定するEnterでは追加しない）
+function onEnter(input, callback) {
+  input.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.isComposing) callback();
+  });
+}
+
+// 追加したタグを「#タグ ×」のボタンで並べる（押すと外す）
+function renderRemovableTags(container, list, onChange) {
+  container.innerHTML = "";
+  list.forEach(function (tag, index) {
+    var btn = document.createElement("button");
+    btn.className = "tag";
+    btn.textContent = "#" + tag + " ×";
+    btn.onclick = function () {
+      list.splice(index, 1);
+      onChange();
+    };
+    container.appendChild(btn);
+  });
+}
+
+// ===== 掲示板 =====
+
+function renderList() {
+  // 絞り込みに使っているタグ
+  var filterArea = document.getElementById("filterTags");
+  renderRemovableTags(filterArea, filterTags, renderList);
+  if (filterTags.length > 0) {
+    var clearBtn = document.createElement("button");
+    clearBtn.textContent = "すべて解除";
+    clearBtn.onclick = function () {
+      filterTags = [];
+      renderList();
+    };
+    filterArea.appendChild(clearBtn);
+  }
+
+  // 追加したタグがすべて付いているポップだけを残す
+  var filtered = pops.filter(function (pop) {
+    return filterTags.every(function (tag) {
+      return pop.tags.indexOf(tag) !== -1;
+    });
+  });
+
+  // カードの描画（画像1枚・タイトル・タグは先頭3個まで）
+  var timeline = document.getElementById("timeline");
+  timeline.innerHTML = "";
+  if (filtered.length === 0) {
+    timeline.textContent = "条件に合うポップはありません";
+    return;
+  }
+  filtered.forEach(function (pop) {
+    var card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML =
+      '<div class="img">画像1 / ' + pop.imageCount + '</div>' +
+      '<div class="title"></div>' +
+      '<div class="meta cardTags"></div>' +
+      '<div class="meta">匿名 ・ ' + pop.createdAt + '</div>';
+    card.querySelector(".title").textContent = pop.title;
+
+    var shown = pop.tags.slice(0, 3).map(function (tag) { return "#" + tag; }).join(" ");
+    if (pop.tags.length > 3) shown += " +" + (pop.tags.length - 3);
+    card.querySelector(".cardTags").textContent = shown;
+
+    card.onclick = function () { showDetail(pop); };
+    timeline.appendChild(card);
+  });
+}
+
+var filterInput = document.getElementById("filterTagInput");
+function addFilterTag() {
+  if (addTagTo(filterTags, filterInput.value)) {
+    filterInput.value = "";
+    renderList();
+  }
+}
+document.getElementById("addFilterTagBtn").onclick = addFilterTag;
+onEnter(filterInput, addFilterTag);
+
+// ===== 詳細 =====
+
+function showDetail(pop) {
+  var images = document.getElementById("detailImages");
+  images.innerHTML = "";
+  for (var i = 1; i <= pop.imageCount; i++) {
+    var img = document.createElement("div");
+    img.className = "img";
+    img.textContent = "画像" + i + " / " + pop.imageCount;
+    images.appendChild(img);
+  }
+  document.getElementById("detailTitle").textContent = pop.title;
+  document.getElementById("detailTags").textContent =
+    pop.tags.map(function (tag) { return "#" + tag; }).join(" ");
+  document.getElementById("detailMeta").textContent = "匿名 ・ " + pop.createdAt;
+
+  // 住所は入力されているときだけ表示する
+  var address = document.getElementById("detailAddress");
+  address.textContent = "住所：" + pop.address;
+  address.className = pop.address === "" ? "hidden" : "";
+
+  document.getElementById("detailContent").textContent = pop.content;
+  showView(detailView);
+}
+
+// ===== 投稿フォーム =====
+
+// よく使われているタグ（本来は GET /api/tags で取得する）
+function getPopularTags(limit) {
+  var counts = {};
+  pops.forEach(function (pop) {
+    pop.tags.forEach(function (tag) {
+      counts[tag] = (counts[tag] || 0) + 1;
+    });
+  });
+  return Object.keys(counts)
+    .sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b); })
+    .slice(0, limit);
+}
+
+function renderDraftTags() {
+  renderRemovableTags(document.getElementById("formTags"), draftTags, renderDraftTags);
+
+  // 候補は、まだ追加していない人気タグだけを出す
+  var suggestions = document.getElementById("tagSuggestions");
+  suggestions.innerHTML = "";
+  getPopularTags(20).forEach(function (tag) {
+    if (draftTags.indexOf(tag) !== -1) return;
+    var btn = document.createElement("button");
+    btn.className = "tag";
+    btn.textContent = "#" + tag;
+    btn.onclick = function () {
+      addTagTo(draftTags, tag);
+      renderDraftTags();
+    };
+    suggestions.appendChild(btn);
+  });
+}
+
+var tagInput = document.getElementById("formTagInput");
+function addDraftTag() {
+  if (addTagTo(draftTags, tagInput.value)) {
+    tagInput.value = "";
+    renderDraftTags();
+  }
+}
+document.getElementById("addTagBtn").onclick = addDraftTag;
+onEnter(tagInput, addDraftTag);
+
+// ===== 画面の切り替えと投稿 =====
+
+document.getElementById("newBtn").onclick = function () {
+  document.getElementById("formTitle").value = "";
+  document.getElementById("formContent").value = "";
+  document.getElementById("formAddress").value = "";
+  tagInput.value = "";
+  draftTags = [];
+  renderDraftTags();
+  showView(formView);
+};
+document.getElementById("backBtn").onclick = function () { showView(listView); };
+document.getElementById("cancelBtn").onclick = function () { showView(listView); };
+
+document.getElementById("submitBtn").onclick = function () {
+  var title = document.getElementById("formTitle").value;
+  if (title === "") {
+    alert("タイトルを入力してください");
+    return;
+  }
+  pops.unshift({
+    id: Date.now(),
+    title: title,
+    imageCount: 1,
+    tags: draftTags.slice(),
+    content: document.getElementById("formContent").value,
+    address: document.getElementById("formAddress").value,
+    createdAt: "たった今"
+  });
+  // 投稿したポップが見えるように絞り込みを解除する
+  filterTags = [];
+  renderList();
+  showView(listView);
+};
+
+renderList();
+</script>
+</body>
+</html>
