@@ -141,9 +141,20 @@ DBはRenderのPostgreSQL、画像はCloudinary。JavaはRenderがネイティブ
 ## 10. 開発の進め方
 - フロントとバックは並行開発。API仕様（[api.md](api.md)）を先に合意し、フロントはダミーデータで進める
 - Issueは使わない。担当は6章に従い、何をやるかは二人で口頭・チャットで合わせる
-- `feature/xxx`ブランチで作業し、**Pull Requestでお互いにレビューしてからmainへマージ**する（mainへ直接pushしない）
-- PRの説明には、**何をしたか**と**どう確認したか**を書く（PRが作業の記録になる）
-- `main`は常に動く状態を保つ
+
+**Git Flow（簡略版）**
+
+| ブランチ | 役割 | 更新のしかた |
+|---|---|---|
+| `main` | 公開する安定版 | `develop`からのPRだけ。直接コミットしない |
+| `develop` | 開発の統合先。常に動く状態を保つ | `feature/*`からのPRだけ。直接コミットしない |
+| `feature/機能名` | 1つの作業ごとの作業ブランチ | `develop`から切り、`develop`へPR。マージしたら削除 |
+
+- ブランチ名は英小文字とハイフン（例：`feature/list-page`）
+- 流れ：①`develop`を最新にして`feature/*`を切る → ②作業してコミット・push → ③`develop`向けにPRを出す → ④相方がレビューしてマージ → ⑤ブランチを削除
+- 区切り（動作確認が済んだとき、デプロイするとき）に、`develop`から`main`へPRを出してマージする
+- `release/*`と`hotfix/*`は作らない（二人で、公開前のため）。公開後に本番の緊急修正が必要になったら、`main`から`hotfix/*`を切って使う
+- PRの説明は短くてよい（何をしたかを1〜2行）。マージ前に、書いた人以外がレビューする
 
 **作業の順番**
 - **takumi**：①雛形を`static/`へ移動（済） → ②各画面の骨組み（HTMLとJS。見た目は後回し。一覧 → 詳細 → 投稿フォームの順。共通JSは、各画面と一緒に必要な分だけ作る） → ③CSS
@@ -151,10 +162,10 @@ DBはRenderのPostgreSQL、画像はCloudinary。JavaはRenderがネイティブ
 - **二人で**：フロントとバックを繋いで動作確認 → デプロイ
 
 **取り決め**
-- **雛形の移動**：takumiが最初のPRで、ルートの`index.html` `css/` `js/`を`server/src/main/resources/static/`へ`git mv`で移す。itoは土台を作るとき`static/`を上書き・削除しない
+- **`static/`の扱い**：フロントのファイルは`server/src/main/resources/static/`に置いてある。itoはSpring Bootの土台を作るとき、`static/`を上書き・削除しない
 - **CSS**：各ページの骨組みができてから書く。それまでもHTMLには共通部品のクラス名（`header` `container` `logo` `btn` `btn-block` `input` `card` `tag` `text-sub` `link`）を付けておく。共通部品は`style.css`だけ、画面専用は`list.css` `post.css`など別ファイル（同じファイルを二人が編集してぶつからないため）
 - **共通JS**：API呼び出しと整形は`js/api.js` `js/common.js`にまとめる（takumi）。最初から全部は作らず、各画面と一緒に必要な分だけ作る。`USE_MOCK`がtrueの間は、api.mdのレスポンス例と同じ形のダミーデータで動く。タグの整形（`normalizeTag`）はここの1つを使う
-- **共通JSの受け渡し**：itoの送信処理が使う`createPop` `getTags` `normalizeTag`は、itoがその作業に入るまでにmainに入れる（takumi）
+- **共通JSの受け渡し**：itoの送信処理が使う`createPop` `getTags` `normalizeTag`は、itoがその作業に入るまでに`develop`に入れる（takumi）
 - **ユーザーが入力した文字の表示**：`textContent`を使い、`innerHTML`に入れない（匿名で誰でも書き込めるため）
 - **秘密情報**：DBのパスワード、Cloudinaryのキーなどはコミットしない。環境変数で渡し、READMEには変数名だけを書く
 - **API仕様の変更**：PRで出し、二人で合意してから実装を直す

@@ -43,7 +43,6 @@ VS Codeの拡張機能 **Live Server** で、確認したいHTMLを右クリッ�
 
 ## 開発の進め方
 - 担当は [docs/spec.md](docs/spec.md) の6章に従う（Issueは使わない）
-- 作業は `feature/xxx` ブランチを切って行う
-- **Pull Request** を出して相手にレビューしてもらってから `main` へマージする（`main`へ直接pushしない）
-- PRの説明には、何をしたか・どう確認したかを書く
-- `main` は常に動く状態を保つ
+- Git Flow（簡略版）：`feature/*` を `develop` から切り、`develop` へPR。区切りで `develop` から `main` へPR
+- `main` と `develop` へ直接pushしない。相手にレビューしてもらってからマージする
+- 詳しくは [docs/spec.md](docs/spec.md) の10章
