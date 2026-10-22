@@ -1,4 +1,10 @@
 let filterTags = [];
+let clearBtn = document.getElementById("clearTagBtn");
+
+clearBtn.addEventListener("click", function () {
+    filterTags = [];
+    renderFilterTags();
+})
 
 function renderFilterTags() {
     let area = document.getElementById("filterTagsArea")
@@ -15,4 +21,6 @@ function renderFilterTags() {
         });
         area.appendChild(btn);
     })
-}   
+    clearBtn.hidden = filterTags.length === 0;
+}
+renderFilterTags();
