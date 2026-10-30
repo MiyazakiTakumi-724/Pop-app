@@ -40,6 +40,7 @@ function renderFilterTags() {
         area.appendChild(btn);
     })
     clearBtn.hidden = filterTags.length === 0;
+    renderCards();
 }
 renderFilterTags();
 
@@ -47,7 +48,7 @@ function renderCards() {
     let timeline = document.getElementById("timeline");
     timeline.textContent = "";
 
-    let result = getPops();
+    let result = getPops({ tags: filterTags });
     result.items.forEach(function (pop) {
         // ポップをいれるdiv
         let card = document.createElement("div");
@@ -87,4 +88,3 @@ function renderCards() {
         timeline.appendChild(card);
     });
 }
-renderCards();
