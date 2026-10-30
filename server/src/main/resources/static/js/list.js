@@ -75,7 +75,7 @@ function renderCards() {
         // 投稿日時
         let date = document.createElement("p");
         date.className = "text-sub";
-        date.textContent = pop.createdAt;
+        date.textContent = formatTimeAgo(pop.createdAt);
 
         // divに挿入
         card.appendChild(thumb);
