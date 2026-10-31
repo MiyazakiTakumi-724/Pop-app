@@ -40,6 +40,7 @@ function renderFilterTags() {
         area.appendChild(btn);
     })
     clearBtn.hidden = filterTags.length === 0;
+    renderCards();
 }
 renderFilterTags();
 
@@ -47,8 +48,16 @@ function renderCards() {
     let timeline = document.getElementById("timeline");
     timeline.textContent = "";
 
-    let result = getPops();
+    let result = getPops({ tags: filterTags });
+
+    // 1件もなければ、メッセージを出して終わる
+    if (result.items.length === 0) {
+        timeline.textContent = "条件に合うポップはありません";
+        return;
+    }
+
     result.items.forEach(function (pop) {
+
         // ポップをいれるdiv
         let card = document.createElement("div");
         card.className = "card";
@@ -87,4 +96,3 @@ function renderCards() {
         timeline.appendChild(card);
     });
 }
-renderCards();

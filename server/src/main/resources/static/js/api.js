@@ -7,9 +7,18 @@ let MOCK_POPS = [
     { id: 1, title: "地元の秋祭りに行ってきた", thumbnailUrl: "", imageCount: 1, tags: [], createdAt: "2026-10-22T10:00:00Z" }
 ];
 
-function getPops() {
+function getPops(options) {
+    let tags = options.tags;
+
+    // 指定したタグが全部ついているポップだけ残す
+    let filtered = MOCK_POPS.filter(function (pop) {
+        return tags.every(function (tag) {
+            return pop.tags.includes(tag);
+        });
+    });
+
     return {
-        items: MOCK_POPS,
+        items: filtered,
         page: 0,
         size: 20,
         hasNext: false
